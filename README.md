@@ -25,4 +25,8 @@ or Javascript:
     square.setAttribute("text", "This is a simple sample text.");
     square.setAttribute("username", "User Name");
     square.setAttribute("avatar", "avatar.png");
+
+    square.addEventListener('press-like', e => {
+        alert('Like');
+    });
 ```
