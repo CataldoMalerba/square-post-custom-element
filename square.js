@@ -2,11 +2,11 @@
   const template = document.createElement("template");
   template.innerHTML = `
 
-  <div class="square">
+  <div class="square unselectable">
   <div class="wrapper">
       <div class="squareHeader">
           <img class="squarePicture" alt="...">
-          <span class="squareUsername"></span>
+          <a href="" class="squareUsername"></a>
       </div>            
       <div class="squareBody">
           <div class="text-inner">
@@ -14,7 +14,7 @@
           </div>
       </div>
       <div class="squareFooter">
-
+        <button class="like"><span class="likeIcon"></span></button>
       </div>
   </div>      
 </div>`;
@@ -32,34 +32,74 @@
 
     connectedCallback() {
       console.info("connected");
+      this.shadowRoot.querySelector(".like").onclick = () => { this.pressLike() };
       updateStyle(this);
     }
 
     static get observedAttributes() {
       return [
         "width",
+        "backgroundcolor",
+        "textcolor",
         "text",
         "avatar",
-        "userName",
-        "backgroundColor",
-        "textColor"
+        "username",
+        "showheader",
+        "showfooter",
+        "username-href"
       ];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
       switch (name) {
-        case "avatar":
-          debugger;
+        case "avatar":;
           updateAvatar(this);
-        case "userName":
-            updateUserName(this);
+        case "username":
+          updateUserName(this);
         case "text":
           updateText(this);
+          break;
+        case "text":
+          updateOnPress(this);
+          break;
+        case "username-href":
+          updateUserNameHref(this);
+          break;
+        case "backgroundcolor" || "textcolor":
+          updateStyle(this);
           break;
         default:
           updateStyle(this);
           break;
       }
+    }
+
+    get showHeader() {
+      let value = this.getAttribute("showheader");
+      if(value == null)
+        return true;
+      else if (value == 'false')
+        return false;
+      else return true;
+    }
+
+    set showHeader(newValue) {
+      if(newValue == true) return this.setAttribute("showheader", "true")
+      else return this.setAttribute("showheader", "false");
+    }
+
+    get showFooter() {
+      let value = this.getAttribute("showfooter");
+      if(value == null)
+        return true;
+      else if (value == 'false')
+        return false;
+      else return true;
+    }
+
+    set showFooter(newValue) {
+      if(newValue == true) return this.setAttribute("showfooter", "true")
+      else return this.setAttribute("showfooter", "false");
     }
 
     get text() {
@@ -83,8 +123,46 @@
     }
 
     set userName(newValue) {
-      this.setAttribute("userName", newValue);
+      this.setAttribute("username", newValue);
     }
+
+    get backgroundColor() {
+      return this.getAttribute("backgroundcolor");
+    }
+
+    set backgroundColor(newValue) {
+      this.setAttribute("backgroundcolor", newValue);
+    }
+
+    get textColor() {
+      return this.getAttribute("textcolor");
+    }
+
+    set textColor(newValue) {
+      this.setAttribute("textcolor", newValue);
+    }
+
+    get width() {
+      return this.getAttribute("width");
+    }
+
+    set width(newValue) {
+      this.setAttribute("width", newValue);
+    }
+
+    get userNameHref() {
+      return this.getAttribute("username-href");
+    }
+
+    set userNameHref(newValue) {
+      this.setAttribute("username-href", newValue);
+    }
+
+    pressLike() {
+      const tabs = this.shadowRoot.querySelector('.like');
+      tabs.dispatchEvent(new Event('press-like', {bubbles: true, composed: true}));
+    }
+
   }
 
   function updateText(elem) {
@@ -97,6 +175,11 @@
     shadow.querySelector(".squareUsername").textContent = elem.userName;
   }
 
+  function updateUserNameHref(elem) {
+    const shadow = elem.shadowRoot;
+    shadow.querySelector(".squareUsername").href = elem.userNameHref;
+  }
+
   function updateAvatar(elem) {
     const shadow = elem.shadowRoot;
     shadow.querySelector(".squarePicture").src = elem.avatar;
@@ -104,18 +187,28 @@
 
   function updateStyle(elem) {
     let width = elem.getAttribute("width") || "100%";
-    let backgroundColor = elem.getAttribute("backgroundColor") || ""; 
-    let textColor = elem.getAttribute("textColor") || ""; 
+    let backgroundColor = elem.getAttribute("backgroundcolor") || ""; 
+    let textColor = elem.getAttribute("textcolor") || "";
+    let showheader =  elem.showHeader == true ? "flex" : "none";
+    let showfooter =  elem.showFooter == true ? "flex" : "none";
     const shadow = elem.shadowRoot;
     shadow.querySelector("style").textContent = `
     .square{
       position: relative;
       width: ${width || '100%'};
-      border-style: solid;
-      border-width: 1px;
       background-color: ${backgroundColor || ""};
       font-family: 'Open Sans', sans-serif;
       letter-spacing: 0.2em;
+    }
+
+    .unselectable{
+      -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
     }
     
     .square::before{
@@ -148,19 +241,23 @@
     .squareHeader,
     .squareFooter{  
       height: 15%;
+      background-color: rgba(255, 255, 255, 1);;
     }
   
     .squareHeader{
+      display: ${showheader} !important;
       top: 0;
     }
   
     .squareFooter{
+      display: ${showfooter} !important;
       bottom: 0;
     }
   
     .squareBody{
       top: 15%;
       height: 70%;
+      cursor: pointer;
     }
   
     .squarePicture{
@@ -174,7 +271,8 @@
       margin-left: 2.5%;
       vertical-align: middle;
       padding-left: 10px;
-      font-size: 1.5rem;
+      font-size: 1.2em;
+      letter-spacing: 0;
     }
   
     .text-inner {
@@ -191,7 +289,51 @@
       font-size: 20px;
       line-height: 1.4em;
       color: ${textColor || ""};
-    }  
+    }
+
+    a{
+      color: black;
+    }
+  
+    a:link {
+      text-decoration: none;
+    }
+    
+    a:visited {
+      text-decoration: none;
+    }
+    
+    a:hover {
+      text-decoration: underline;
+    }
+    
+    a:active {
+      text-decoration: underline;
+    }
+
+    .like{
+      appearance: none;
+      position: absolute;
+      right: 0;
+
+      background: none;
+	    color: inherit;
+	    border: none;
+	    padding: 0;
+	    font: inherit;
+	    cursor: pointer;
+	  outline: inherit;
+    }
+
+    .likeIcon{
+      background: url(knowledge.png) no-repeat top left;
+      background-size: contain;
+      cursor: pointer;
+      display: inline-block;
+      margin-left: 2.5%;
+      height: 80%;
+      max-width: 100%;
+    }
     `;
   }
 
