@@ -14,7 +14,7 @@
           </div>
       </div>
       <div class="squareFooter">
-        <button class="like"><span class="likeIcon"></span></button>
+        <button class="like">Like<span class="likeIcon"></span></button>
       </div>
   </div>      
 </div>`;
